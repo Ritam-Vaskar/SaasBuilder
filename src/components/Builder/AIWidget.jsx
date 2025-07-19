@@ -31,8 +31,12 @@ const AIWidget = ({ onApplyTemplate, onAddSuggestedWidget }) => {
     setIsLoading(true);
     try {
       const template = await AIService.generateTemplate(appType, description);
-      if (template) {
+      if (template && template.layout && template.layout.components) {
         setTemplate(template);
+        // Automatically apply the template if it's valid
+        if (onApplyTemplate) {
+          onApplyTemplate(template);
+        }
       }
     } catch (error) {
       console.error('Error generating template:', error);

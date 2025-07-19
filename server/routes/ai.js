@@ -28,7 +28,23 @@ No markdown, no explanation, no preface. Just pure JSON.`;
     case 'generate-template':
       return `Create a layout template for a ${appType} app with this description: "${description}".
 
-Return ONLY a valid JSON object with the structure of the layout. No explanation, no markdown.`;
+Return ONLY a valid JSON object with this exact structure:
+{
+  "name": "Template Name",
+  "description": "Template Description",
+  "layout": {
+    "components": [
+      {
+        "id": "unique-id-1",
+        "type": "text|button|form|table",
+        "props": { },
+        "position": { "x": 0, "y": 0, "width": 200, "height": 100 }
+      }
+    ]
+  }
+}
+
+No explanation, no markdown. Just the JSON object.`;
 
     case 'optimize-layout':
       return `You're a UI optimization assistant.

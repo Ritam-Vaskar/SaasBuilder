@@ -22,7 +22,24 @@ class AIService {
         appType,
         description
       });
-      return response.data.template;
+      
+      // Ensure the template has the correct structure
+      const template = response.data.template;
+      if (!template || !template.layout || !template.layout.components) {
+        throw new Error('Invalid template structure');
+      }
+      
+      return {
+        name: template.name,
+        description: template.description,
+        layout: {
+          components: template.layout.components.map(component => ({
+            ...component,
+            id: component.id || crypto.randomUUID(),
+            position: component.position || { x: 0, y: 0, width: 200, height: 100 }
+          }))
+        }
+      };
     } catch (error) {
       console.error('Error generating template:', error);
       return null;
