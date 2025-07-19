@@ -2,46 +2,8 @@ import axios from 'axios';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
-export interface WidgetSuggestion {
-  type: string;
-  name: string;
-  description: string;
-}
-
-export interface Template {
-  name: string;
-  description: string;
-  layout: {
-    components: Array<{
-      id: string;
-      type: string;
-      position: {
-        x: number;
-        y: number;
-        width: number;
-        height: number;
-      };
-      props: Record<string, any>;
-    }>;
-  };
-}
-
-export interface OptimizedLayout {
-  suggestions: string[];
-  improvements: Array<{
-    id: string;
-    type: string;
-    position: {
-      x: number;
-      y: number;
-      width: number;
-      height: number;
-    };
-  }>;
-}
-
 class AIService {
-  static async getSuggestions(appType: string, description: string): Promise<WidgetSuggestion[]> {
+  static async getSuggestions(appType, description) {
     try {
       const response = await axios.post(`${API_BASE_URL}/ai/suggest-widgets`, {
         appType,
@@ -54,7 +16,7 @@ class AIService {
     }
   }
 
-  static async generateTemplate(appType: string, description: string): Promise<Template | null> {
+  static async generateTemplate(appType, description) {
     try {
       const response = await axios.post(`${API_BASE_URL}/ai/generate-template`, {
         appType,
@@ -67,7 +29,7 @@ class AIService {
     }
   }
 
-  static async optimizeLayout(components: any[]): Promise<OptimizedLayout | null> {
+  static async optimizeLayout(components) {
     try {
       const response = await axios.post(`${API_BASE_URL}/ai/optimize-layout`, {
         components

@@ -5,55 +5,9 @@ import axios from 'axios';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
-interface Component {
-  id: string;
-  type: string;
-  position: {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  };
-  props: any;
-  styling: any;
-  data: any;
-}
-
-interface App {
-  _id: string;
-  name: string;
-  description: string;
-  type: string;
-  slug: string;
-  isPublic: boolean;
-  layout: {
-    components: Component[];
-    gridSize: number;
-    theme: {
-      primaryColor: string;
-      secondaryColor: string;
-      accentColor: string;
-      backgroundColor: string;
-      textColor: string;
-      darkMode: boolean;
-    };
-  };
-  analytics: {
-    views: number;
-    uniqueVisitors: number;
-    lastViewed?: string;
-  };
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface WidgetProps {
-  component: Component;
-}
-
-const Widget: React.FC<WidgetProps> = ({ component }) => {
-  const [formData, setFormData] = useState<{[key: string]: any}>({});
-  const [componentData, setComponentData] = useState<any>(null);
+const Widget = ({ component }) => {
+  const [formData, setFormData] = useState({});
+  const [componentData, setComponentData] = useState(null);
 
   useEffect(() => {
     const fetchComponentData = async () => {
@@ -81,11 +35,11 @@ const Widget: React.FC<WidgetProps> = ({ component }) => {
     fetchComponentData();
   }, [component.id, component.appId, component.props?.linkedCollection]);
 
-  const handleInputChange = (fieldName: string, value: any) => {
+  const handleInputChange = (fieldName, value) => {
     setFormData(prev => ({ ...prev, [fieldName]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!component.appId) return;
 
@@ -184,7 +138,7 @@ const Widget: React.FC<WidgetProps> = ({ component }) => {
               {componentProps.title || 'Form'}
             </h3>
             <form className="space-y-3" onSubmit={handleSubmit}>
-              {componentProps.fields?.map((field: any, index: number) => {
+              {componentProps.fields?.map((field, index) => {
                 if (!field || typeof field !== 'object') return null;
                 
                 const fieldLabel = field.label || `Field ${index + 1}`;
@@ -216,7 +170,7 @@ const Widget: React.FC<WidgetProps> = ({ component }) => {
                         required={fieldRequired}
                       >
                         <option value="">Select {fieldLabel.toLowerCase()}</option>
-                        {field.options?.map((option: string, i: number) => (
+                        {field.options?.map((option, i) => (
                           <option key={i} value={option || `Option ${i + 1}`}>
                             {option || `Option ${i + 1}`}
                           </option>
@@ -306,7 +260,7 @@ const Widget: React.FC<WidgetProps> = ({ component }) => {
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead className="bg-gray-50 dark:bg-gray-900">
                 <tr>
-                  {componentProps.columns?.map((column: any, index: number) => (
+                  {componentProps.columns?.map((column, index) => (
                     <th key={index} scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       {column.header}
                     </th>
@@ -315,9 +269,9 @@ const Widget: React.FC<WidgetProps> = ({ component }) => {
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {componentData?.data && componentData.data.length > 0 ? (
-                  componentData.data.map((row: any, rowIndex: number) => (
+                  componentData.data.map((row, rowIndex) => (
                     <tr key={rowIndex}>
-                      {componentProps.columns?.map((column: any, colIndex: number) => (
+                      {componentProps.columns?.map((column, colIndex) => (
                         <td key={colIndex} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">
                           {row[column.field]}
                         </td>
@@ -365,12 +319,12 @@ const Widget: React.FC<WidgetProps> = ({ component }) => {
   );
 };
 
-const AppPreview: React.FC = () => {
-  const { slug } = useParams<{ slug: string }>();
-  const [app, setApp] = useState<App | null>(null);
+const AppPreview = () => {
+  const { slug } = useParams();
+  const [app, setApp] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [appId, setAppId] = useState<string | null>(null);
+  const [error, setError] = useState(null);
+  const [appId, setAppId] = useState(null);
 
   useEffect(() => {
     const fetchApp = async () => {
@@ -388,7 +342,7 @@ const AppPreview: React.FC = () => {
         const response = await axios.get(`${API_BASE_URL}/apps/${slug}/public`);
         setApp(response.data.app);
         setAppId(response.data.app._id);
-      } catch (err: any) {
+      } catch (err) {
         console.error('Error fetching app:', err);
         if (err.response?.status === 404) {
           setError('App not found or not public');

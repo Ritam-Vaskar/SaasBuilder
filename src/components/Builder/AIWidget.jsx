@@ -1,19 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Wand2, Loader2, Sparkles } from 'lucide-react';
-import AIService, { WidgetSuggestion, Template } from '../../services/AIService';
+import AIService from '../../services/AIService';
 import { useApp } from '../../contexts/AppContext';
 
-interface AIWidgetProps {
-  onApplyTemplate?: (template: Template) => void;
-  onAddSuggestedWidget?: (widget: WidgetSuggestion) => void;
-}
-
-const AIWidget: React.FC<AIWidgetProps> = ({ onApplyTemplate, onAddSuggestedWidget }) => {
+const AIWidget = ({ onApplyTemplate, onAddSuggestedWidget }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [appType, setAppType] = useState('');
   const [description, setDescription] = useState('');
-  const [suggestions, setSuggestions] = useState<WidgetSuggestion[]>([]);
-  const [template, setTemplate] = useState<Template | null>(null);
+  const [suggestions, setSuggestions] = useState([]);
+  const [template, setTemplate] = useState(null);
   const { currentApp } = useApp();
 
   const handleGetSuggestions = async () => {

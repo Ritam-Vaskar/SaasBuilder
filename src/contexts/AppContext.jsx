@@ -1,74 +1,7 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import axios from 'axios';
 
-interface Component {
-  id: string;
-  type: string;
-  position: {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  };
-  props: any;
-  styling: any;
-  data: any;
-}
-
-interface App {
-  _id: string;
-  name: string;
-  description: string;
-  type: string;
-  slug: string;
-  isPublic: boolean;
-  layout: {
-    components: Component[];
-    gridSize: number;
-    theme: {
-      primaryColor: string;
-      secondaryColor: string;
-      accentColor: string;
-      backgroundColor: string;
-      textColor: string;
-      darkMode: boolean;
-    };
-  };
-  analytics: {
-    views: number;
-    uniqueVisitors: number;
-    lastViewed?: string;
-  };
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface AppContextType {
-  apps: App[];
-  currentApp: App | null;
-  selectedComponent: Component | null;
-  isPreviewMode: boolean;
-  isDarkMode: boolean;
-  fetchApps: () => Promise<void>;
-  fetchPublicApp: (slug: string) => Promise<App>;
-  createApp: (appData: Partial<App>) => Promise<App>;
-  updateApp: (appId: string, updates: Partial<App>) => Promise<void>;
-  deleteApp: (appId: string) => Promise<void>;
-  toggleAppVisibility: (appId: string, isPublic: boolean) => Promise<void>;
-  setCurrentApp: (app: App | null) => void;
-  setSelectedComponent: (component: Component | null) => void;
-  togglePreviewMode: () => void;
-  toggleDarkMode: () => void;
-  updateComponent: (componentId: string, updates: Partial<Component>) => void;
-  addComponent: (component: Component) => void;
-  removeComponent: (componentId: string) => void;
-  duplicateComponent: (componentId: string) => void;
-  submitFormData: (formId: string, data: any) => Promise<any>;
-  fetchComponentData: (componentId: string) => Promise<any>;
-  getComponentById: (componentId: string) => Component | null;
-}
-
-const AppContext = createContext<AppContextType | undefined>(undefined);
+const AppContext = createContext();
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
@@ -80,25 +13,12 @@ export const useApp = () => {
   return context;
 };
 
-interface AppProviderProps {
-  children: ReactNode;
-}
-
-export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
-  const [apps, setApps] = useState<App[]>([]);
-  const [currentApp, setCurrentApp] = useState<App | null>(null);
-  const [selectedComponent, setSelectedComponent] = useState<Component | null>(null);
+export const AppProvider = ({ children }) => {
+  const [apps, setApps] = useState([]);
+  const [currentApp, setCurrentApp] = useState(null);
+  const [selectedComponent, setSelectedComponent] = useState(null);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
-
-  
-
-  
-
-  // const getComponentById = (componentId: string): Component | null => {
-  //   if (!currentApp) return null;
-  //   return currentApp.layout.components.find(comp => comp.id === componentId) || null;
-  // };
 
   const fetchApps = async () => {
     try {
@@ -117,17 +37,17 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     }
   };
 
-  const fetchPublicApp = async (slug: string): Promise<App> => {
+  const fetchPublicApp = async (slug) => {
     try {
       const response = await axios.get(`${API_BASE_URL}/apps/${slug}/public`);
       return response.data.app;
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error fetching public app:', error);
       throw new Error(error.response?.data?.message || 'Failed to fetch app');
     }
   };
 
-  const createApp = async (appData: Partial<App>): Promise<App> => {
+  const createApp = async (appData) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('No authentication token');
@@ -141,12 +61,12 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       const newApp = response.data.app;
       setApps(prev => [newApp, ...prev]);
       return newApp;
-    } catch (error: any) {
+    } catch (error) {
       throw new Error(error.response?.data?.message || 'Failed to create app');
     }
   };
 
-  const updateApp = async (appId: string, updates: Partial<App>) => {
+  const updateApp = async (appId, updates) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('No authentication token');
@@ -166,12 +86,12 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       if (currentApp?._id === appId) {
         setCurrentApp(updatedApp);
       }
-    } catch (error: any) {
+    } catch (error) {
       throw new Error(error.response?.data?.message || 'Failed to update app');
     }
   };
 
-  const deleteApp = async (appId: string) => {
+  const deleteApp = async (appId) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('No authentication token');
@@ -186,12 +106,12 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       if (currentApp?._id === appId) {
         setCurrentApp(null);
       }
-    } catch (error: any) {
+    } catch (error) {
       throw new Error(error.response?.data?.message || 'Failed to delete app');
     }
   };
 
-  const toggleAppVisibility = async (appId: string, isPublic: boolean) => {
+  const toggleAppVisibility = async (appId, isPublic) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('No authentication token');
@@ -214,7 +134,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       if (currentApp?._id === appId) {
         setCurrentApp(updatedApp);
       }
-    } catch (error: any) {
+    } catch (error) {
       throw new Error(error.response?.data?.message || 'Failed to update app visibility');
     }
   };
@@ -228,7 +148,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     setIsDarkMode(prev => !prev);
   };
 
-  const updateComponent = (componentId: string, updates: Partial<Component>) => {
+  const updateComponent = (componentId, updates) => {
     if (!currentApp) return;
 
     const updatedComponents = currentApp.layout.components.map(comp =>
@@ -251,7 +171,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     }
   };
 
-  const addComponent = (component: Component) => {
+  const addComponent = (component) => {
     if (!currentApp) return;
 
     const updatedApp = {
@@ -265,7 +185,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     setCurrentApp(updatedApp);
   };
 
-  const removeComponent = (componentId: string) => {
+  const removeComponent = (componentId) => {
     if (!currentApp) return;
 
     const updatedComponents = currentApp.layout.components.filter(
@@ -287,7 +207,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     }
   };
 
-  const duplicateComponent = (componentId: string) => {
+  const duplicateComponent = (componentId) => {
     if (!currentApp) return;
 
     const originalComponent = currentApp.layout.components.find(
@@ -309,7 +229,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     addComponent(duplicatedComponent);
   };
 
-    const submitFormData = async (formId: string, data: any) => {
+  const submitFormData = async (formId, data) => {
     try {
       if (!currentApp) throw new Error('No active app');
       const token = localStorage.getItem('token');
@@ -336,13 +256,13 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       });
 
       return response.data;
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error submitting form data:', error);
       throw new Error(error.response?.data?.message || 'Failed to submit form data');
     }
   };
 
-  const fetchComponentData = async (componentId: string) => {
+  const fetchComponentData = async (componentId) => {
     try {
       if (!currentApp) throw new Error('No active app');
       const token = localStorage.getItem('token');
@@ -369,13 +289,13 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       }
 
       return { data: null };
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error fetching component data:', error);
       return { data: component?.type === 'table' ? [] : null };
     }
   };
 
-  const getComponentById = (componentId: string): Component | null => {
+  const getComponentById = (componentId) => {
     if (!currentApp) return null;
     return currentApp.layout.components.find(comp => comp.id === componentId) || null;
   };

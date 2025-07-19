@@ -20,11 +20,11 @@ import {
   Lock
 } from 'lucide-react';
 
-const Dashboard: React.FC = () => {
+const Dashboard = () => {
   const { user } = useAuth();
   const { apps, fetchApps, deleteApp, createApp } = useApp();
   const navigate = useNavigate();
-  const [view, setView] = useState<'grid' | 'list'>('grid');
+  const [view, setView] = useState('grid');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
 
@@ -39,7 +39,7 @@ const Dashboard: React.FC = () => {
     return matchesSearch && matchesType;
   });
 
-  const handleDeleteApp = async (appId: string) => {
+  const handleDeleteApp = async (appId) => {
     if (window.confirm('Are you sure you want to delete this app?')) {
       try {
         await deleteApp(appId);
@@ -61,8 +61,8 @@ const Dashboard: React.FC = () => {
           theme: {
             primaryColor: '#3b82f6',
             backgroundColor: '#ffffff',
-            secondaryColor: '#10B981', // Add this
-            accentColor: '#F97316', // Add this
+            secondaryColor: '#10B981',
+            accentColor: '#F97316',
             textColor: '#111827',
             darkMode: false
           }
@@ -72,7 +72,7 @@ const Dashboard: React.FC = () => {
           requireAuth: false,
           customCSS: ''
         }
-      } as any);
+      });
       navigate(`/app/${newApp._id}`);
     } catch (error) {
       console.error('Failed to create app:', error);
@@ -80,11 +80,11 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const handleEditApp = (appId: string) => {
+  const handleEditApp = (appId) => {
     navigate(`/app/${appId}`);
   };
 
-  const AppCard = ({ app }: { app: any }) => (
+  const AppCard = ({ app }) => (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
       <div className="p-6">
         <div className="flex items-start justify-between mb-4">

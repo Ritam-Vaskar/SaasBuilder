@@ -120,11 +120,7 @@ const widgetTypes = [
 
 const categories = [...new Set(widgetTypes.map(w => w.category))];
 
-interface DraggableWidgetProps {
-  widget: typeof widgetTypes[0];
-}
-
-const DraggableWidget: React.FC<DraggableWidgetProps> = ({ widget }) => {
+const DraggableWidget = ({ widget }) => {
   const [{ isDragging }, drag] = useDrag({
     type: 'widget',
     item: { type: widget.type },
@@ -162,8 +158,8 @@ const DraggableWidget: React.FC<DraggableWidgetProps> = ({ widget }) => {
   );
 };
 
-const WidgetLibrary: React.FC = () => {
-  const [activeCategory, setActiveCategory] = React.useState<string | null>(null);
+const WidgetLibrary = () => {
+  const [activeCategory, setActiveCategory] = React.useState(null);
 
   const filteredWidgets = activeCategory
     ? widgetTypes.filter(widget => widget.category === activeCategory)

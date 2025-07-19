@@ -5,50 +5,17 @@ import WidgetRenderer from './WidgetRenderer';
 import { Plus, Grid, Move, Trash2, Copy, RotateCcw, Sparkles } from 'lucide-react';
 import AIOptimizer from './AIOptimizer';
 
-// Define types for better TypeScript support
-interface ComponentPosition {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
-interface Component {
-  id: string;
-  type: string;
-  position: ComponentPosition;
-  props: Record<string, any>;
-  styling: Record<string, any>;
-  data: Record<string, any>;
-}
-
-interface DragState {
-  isDragging: boolean;
-  startPos: { x: number; y: number };
-  initialPos: { x: number; y: number };
-  componentId: string | null;
-}
-
-interface ResizeState {
-  isResizing: boolean;
-  startPos: { x: number; y: number };
-  initialSize: { width: number; height: number };
-  initialPos: { x: number; y: number };
-  componentId: string | null;
-  handle: string | null;
-}
-
-const Canvas: React.FC = () => {
-  const canvasRef = useRef<HTMLDivElement>(null);
+const Canvas = () => {
+  const canvasRef = useRef(null);
   const [gridSize] = useState(20);
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
-  const [dragState, setDragState] = useState<DragState>({
+  const [dragState, setDragState] = useState({
     isDragging: false,
     startPos: { x: 0, y: 0 },
     initialPos: { x: 0, y: 0 },
     componentId: null
   });
-  const [resizeState, setResizeState] = useState<ResizeState>({
+  const [resizeState, setResizeState] = useState({
     isResizing: false,
     startPos: { x: 0, y: 0 },
     initialSize: { width: 0, height: 0 },
@@ -82,18 +49,18 @@ const Canvas: React.FC = () => {
   }, []);
 
   // Snap to grid function
-  const snapToGrid = useCallback((value: number) => {
+  const snapToGrid = useCallback((value) => {
     return Math.round(value / gridSize) * gridSize;
   }, [gridSize]);
 
   // Mouse event handlers for dragging
-  const handleMouseDown = useCallback((e: React.MouseEvent, componentId: string) => {
+  const handleMouseDown = useCallback((e, componentId) => {
     if (isPreviewMode) return;
     
     e.preventDefault();
     e.stopPropagation();
     
-    const component = currentApp?.layout?.components?.find((c: Component) => c.id === componentId);
+    const component = currentApp?.layout?.components?.find((c) => c.id === componentId);
     if (!component) return;
 
     setSelectedComponent(component);
@@ -106,13 +73,13 @@ const Canvas: React.FC = () => {
   }, [isPreviewMode, currentApp, setSelectedComponent]);
 
   // Mouse event handlers for resizing
-  const handleResizeMouseDown = useCallback((e: React.MouseEvent, componentId: string, handle: string) => {
+  const handleResizeMouseDown = useCallback((e, componentId, handle) => {
     if (isPreviewMode) return;
     
     e.preventDefault();
     e.stopPropagation();
     
-    const component = currentApp?.layout?.components?.find((c: Component) => c.id === componentId);
+    const component = currentApp?.layout?.components?.find((c) => c.id === componentId);
     if (!component) return;
 
     setResizeState({
@@ -127,7 +94,7 @@ const Canvas: React.FC = () => {
 
   // Global mouse move handler
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
+    const handleMouseMove = (e) => {
       if (dragState.isDragging && dragState.componentId) {
         const deltaX = e.clientX - dragState.startPos.x;
         const deltaY = e.clientY - dragState.startPos.y;
@@ -135,7 +102,7 @@ const Canvas: React.FC = () => {
         const newX = Math.max(0, snapToGrid(dragState.initialPos.x + deltaX));
         const newY = Math.max(0, snapToGrid(dragState.initialPos.y + deltaY));
 
-        const component = currentApp?.layout?.components?.find((c: Component) => c.id === dragState.componentId);
+        const component = currentApp?.layout?.components?.find((c) => c.id === dragState.componentId);
         if (component) {
           updateComponent(dragState.componentId, {
             position: {
@@ -216,7 +183,7 @@ const Canvas: React.FC = () => {
   }, [dragState, resizeState, snapToGrid, updateComponent, currentApp]);
 
   // Get default props helper function
-  const getDefaultProps = useCallback((type: string) => {
+  const getDefaultProps = useCallback((type) => {
     switch (type) {
       case 'text':
         return { content: 'Sample text', fontSize: 'medium', textAlign: 'left' };
@@ -278,7 +245,7 @@ const Canvas: React.FC = () => {
   }, []);
 
   // Get default styling helper function
-  const getDefaultStyling = useCallback((type: string) => {
+  const getDefaultStyling = useCallback((type) => {
     return {
       backgroundColor: '#ffffff',
       borderRadius: '8px',
@@ -290,7 +257,7 @@ const Canvas: React.FC = () => {
 
   const [{ isOver }, drop] = useDrop({
     accept: 'widget',
-    drop: (item: { type: string }, monitor) => {
+    drop: (item, monitor) => {
       if (monitor.didDrop()) return;
 
       const canvasRect = canvasRef.current?.getBoundingClientRect();
@@ -302,7 +269,7 @@ const Canvas: React.FC = () => {
       const x = Math.max(0, snapToGrid(offset.x - canvasRect.left));
       const y = Math.max(0, snapToGrid(offset.y - canvasRect.top));
 
-      const newComponent: Component = {
+      const newComponent = {
         id: `${item.type}-${Date.now()}`,
         type: item.type,
         position: { x, y, width: 200, height: 100 },
@@ -319,7 +286,7 @@ const Canvas: React.FC = () => {
     }),
   });
 
-  const handleComponentClick = useCallback((component: Component, e: React.MouseEvent) => {
+  const handleComponentClick = useCallback((component, e) => {
     if (isPreviewMode) return;
     
     e.stopPropagation();
@@ -332,18 +299,18 @@ const Canvas: React.FC = () => {
     }
   }, [isPreviewMode, setSelectedComponent]);
 
-  const handleDeleteComponent = useCallback((componentId: string, e: React.MouseEvent) => {
+  const handleDeleteComponent = useCallback((componentId, e) => {
     e.stopPropagation();
     removeComponent(componentId);
   }, [removeComponent]);
 
-  const handleDuplicateComponent = useCallback((componentId: string, e: React.MouseEvent) => {
+  const handleDuplicateComponent = useCallback((componentId, e) => {
     e.stopPropagation();
     duplicateComponent(componentId);
   }, [duplicateComponent]);
 
   // Render resize handles
-  const renderResizeHandles = useCallback((componentId: string) => {
+  const renderResizeHandles = useCallback((componentId) => {
     if (selectedComponent?.id !== componentId || isPreviewMode) return null;
 
     const handles = [
@@ -431,7 +398,7 @@ const Canvas: React.FC = () => {
         )}
     
         {/* Render Components */}
-        {components.map((component: Component) => (
+        {components.map((component) => (
           <div
             key={component.id}
             className={`absolute transition-all ${

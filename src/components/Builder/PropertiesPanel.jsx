@@ -2,7 +2,7 @@ import React from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { Settings, Palette, Code, Layers } from 'lucide-react';
 
-const PropertiesPanel: React.FC = () => {
+const PropertiesPanel = () => {
   const { selectedComponent, updateComponent } = useApp();
 
   if (!selectedComponent) {
@@ -21,19 +21,19 @@ const PropertiesPanel: React.FC = () => {
     );
   }
 
-  const handlePropUpdate = (key: string, value: any) => {
+  const handlePropUpdate = (key, value) => {
     updateComponent(selectedComponent.id, {
       props: { ...selectedComponent.props, [key]: value }
     });
   };
 
-  const handleStyleUpdate = (key: string, value: any) => {
+  const handleStyleUpdate = (key, value) => {
     updateComponent(selectedComponent.id, {
       styling: { ...selectedComponent.styling, [key]: value }
     });
   };
 
-  const handlePositionUpdate = (key: string, value: number) => {
+  const handlePositionUpdate = (key, value) => {
     updateComponent(selectedComponent.id, {
       position: { ...selectedComponent.position, [key]: value }
     });
@@ -152,7 +152,7 @@ const PropertiesPanel: React.FC = () => {
                 Form Fields
               </label>
               <div className="space-y-2">
-                {selectedComponent.props?.fields?.map((field: any, index: number) => (
+                {selectedComponent.props?.fields?.map((field, index) => (
                   <div key={index} className="flex items-center space-x-2">
                     <input
                       type="text"

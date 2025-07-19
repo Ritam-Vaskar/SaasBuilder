@@ -16,7 +16,7 @@ import {
   Loader2
 } from 'lucide-react';
 
-const Header: React.FC = () => {
+const Header = () => {
   const { user, logout } = useAuth();
   const { 
     currentApp, 
@@ -27,7 +27,7 @@ const Header: React.FC = () => {
     updateApp 
   } = useApp();
 
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [saveStatus, setSaveStatus] = useState('idle');
   const [saveMessage, setSaveMessage] = useState('');
 
   const handleSave = async () => {
@@ -56,7 +56,7 @@ const Header: React.FC = () => {
         setSaveMessage('');
       }, 3000);
       
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to save app:', error);
       setSaveStatus('error');
       setSaveMessage(error.message || 'Failed to save app');

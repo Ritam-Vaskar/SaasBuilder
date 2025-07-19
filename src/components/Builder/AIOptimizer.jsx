@@ -3,13 +3,9 @@ import { Sparkles, Loader2, X } from 'lucide-react';
 import AIService from '../../services/AIService';
 import { useApp } from '../../contexts/AppContext';
 
-interface AIOptimizerProps {
-  onClose: () => void;
-}
-
-const AIOptimizer: React.FC<AIOptimizerProps> = ({ onClose }) => {
+const AIOptimizer = ({ onClose }) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [suggestions, setSuggestions] = useState([]);
   const { currentApp, updateComponent } = useApp();
 
   const handleOptimizeLayout = async () => {

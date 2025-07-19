@@ -2,15 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { Type, MousePointer, BarChart, Calendar, Clock, Hash } from 'lucide-react';
 
-interface WidgetRendererProps {
-  component: any;
-  isSelected: boolean;
-  isPreviewMode: boolean;
-  onDrag: (newPosition: any) => void;
-  onResize: (newSize: any) => void;
-}
-
-const WidgetRenderer: React.FC<WidgetRendererProps> = ({
+const WidgetRenderer = ({
   component,
   isSelected,
   isPreviewMode,
@@ -18,8 +10,8 @@ const WidgetRenderer: React.FC<WidgetRendererProps> = ({
   onResize
 }) => {
   const { submitFormData, fetchComponentData } = useApp();
-  const [formData, setFormData] = useState<{[key: string]: any}>({});
-  const [tableData, setTableData] = useState<any[]>([]);
+  const [formData, setFormData] = useState({});
+  const [tableData, setTableData] = useState([]);
 
   useEffect(() => {
     const loadTableData = async () => {
@@ -39,18 +31,18 @@ const WidgetRenderer: React.FC<WidgetRendererProps> = ({
     loadTableData();
   }, [component.id, component.type, isPreviewMode, fetchComponentData]);
 
-  const handleInputChange = (fieldName: string, value: any) => {
+  const handleInputChange = (fieldName, value) => {
     setFormData(prev => ({ ...prev, [fieldName]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!isPreviewMode) return;
 
     try {
       await submitFormData(component.id, formData);
       setFormData({});
-      const form = e.target as HTMLFormElement;
+      const form = e.target;
       form.reset();
 
       if (component.props.linkedTable) {
@@ -112,7 +104,7 @@ const WidgetRenderer: React.FC<WidgetRendererProps> = ({
                 {component.props.title || 'Form'}
               </h3>
 
-              {component.props.fields?.map((field: any, index: number) => (
+              {component.props.fields?.map((field, index) => (
                 <div key={index}>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     {field.label}{field.required && <span className="text-red-500">*</span>}
@@ -137,7 +129,7 @@ const WidgetRenderer: React.FC<WidgetRendererProps> = ({
                       disabled={!isPreviewMode}
                     >
                       <option value="">Select {field.label}</option>
-                      {field.options?.map((option: string, i: number) => (
+                      {field.options?.map((option, i) => (
                         <option key={i} value={option}>{option}</option>
                       ))}
                     </select>
@@ -175,7 +167,7 @@ const WidgetRenderer: React.FC<WidgetRendererProps> = ({
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead className="bg-gray-50 dark:bg-gray-900">
                 <tr>
-                  {component.props.columns?.map((column: any, index: number) => (
+                  {component.props.columns?.map((column, index) => (
                     <th key={index} scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       {column.header}
                     </th>
@@ -186,7 +178,7 @@ const WidgetRenderer: React.FC<WidgetRendererProps> = ({
                 {isPreviewMode && tableData.length > 0 ? (
                   tableData.map((row, rowIndex) => (
                     <tr key={rowIndex}>
-                      {component.props.columns?.map((column: any, colIndex: number) => (
+                      {component.props.columns?.map((column, colIndex) => (
                         <td key={colIndex} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">
                           {row[column.field]}
                         </td>

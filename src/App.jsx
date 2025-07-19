@@ -9,7 +9,7 @@ import AppBuilder from './components/Builder/AppBuilder';
 import AppPreview from './components/Preview/AppPreview';
 import { Loader2 } from 'lucide-react';
 
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -26,7 +26,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return user ? <>{children}</> : <Navigate to="/auth" />;
 };
 
-const AppContent: React.FC = () => {
+const AppContent = () => {
   const { user } = useAuth();
 
   return (

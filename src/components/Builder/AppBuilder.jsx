@@ -8,10 +8,9 @@ import Canvas from './Canvas';
 import PropertiesPanel from './PropertiesPanel';
 import AIWidget from './AIWidget';
 import { Loader2, ChevronLeft, ChevronRight, Package, Bot, Settings } from 'lucide-react';
-import { Template, WidgetSuggestion } from '../../services/AIService';
 
-const AppBuilder: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+const AppBuilder = () => {
+  const { id } = useParams();
   const { currentApp, setCurrentApp, apps, isPreviewMode, addComponent } = useApp();
   
   // Panel visibility states
@@ -28,7 +27,7 @@ const AppBuilder: React.FC = () => {
     }
   }, [id, apps, setCurrentApp]);
 
-  const handleApplyTemplate = (template: Template) => {
+  const handleApplyTemplate = (template) => {
     if (!currentApp) return;
     
     // Apply template components to the current app
@@ -40,7 +39,7 @@ const AppBuilder: React.FC = () => {
     });
   };
 
-  const handleAddSuggestedWidget = (widget: WidgetSuggestion) => {
+  const handleAddSuggestedWidget = (widget) => {
     if (!currentApp) return;
 
     // Add suggested widget as a new component
