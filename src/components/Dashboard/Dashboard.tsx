@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useApp } from '../../contexts/AppContext';
 import { 
@@ -21,7 +22,8 @@ import {
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
-  const { apps, fetchApps, deleteApp } = useApp();
+  const { apps, fetchApps, deleteApp, createApp } = useApp();
+  const navigate = useNavigate();
   const [view, setView] = useState<'grid' | 'list'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
@@ -45,6 +47,41 @@ const Dashboard: React.FC = () => {
         console.error('Failed to delete app:', error);
       }
     }
+  };
+
+  const handleCreateApp = async () => {
+    try {
+      const newApp = await createApp({
+        name: 'New App',
+        description: 'A new app created with the app builder',
+        type: 'custom',
+        layout: {
+          components: [],
+          gridSize: 20,
+          theme: {
+            primaryColor: '#3b82f6',
+            backgroundColor: '#ffffff',
+            secondaryColor: '#10B981', // Add this
+            accentColor: '#F97316', // Add this
+            textColor: '#111827',
+            darkMode: false
+          }
+        },
+        settings: {
+          allowComments: false,
+          requireAuth: false,
+          customCSS: ''
+        }
+      } as any);
+      navigate(`/app/${newApp._id}`);
+    } catch (error) {
+      console.error('Failed to create app:', error);
+      alert('Failed to create app. Please try again.');
+    }
+  };
+
+  const handleEditApp = (appId: string) => {
+    navigate(`/app/${appId}`);
   };
 
   const AppCard = ({ app }: { app: any }) => (
@@ -83,26 +120,26 @@ const Dashboard: React.FC = () => {
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-1">
               <Eye className="w-4 h-4" />
-              <span>{app.analytics.views}</span>
+              <span>{app.analytics?.views || 0}</span>
             </div>
             <div className="flex items-center space-x-1">
               <Users className="w-4 h-4" />
-              <span>{app.analytics.uniqueVisitors}</span>
+              <span>{app.analytics?.uniqueVisitors || 0}</span>
             </div>
           </div>
           <span className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
-            v{app.version}
+            v{app.version || 1}
           </span>
         </div>
 
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <button
-              onClick={() => window.open(`/app/${app.slug}`, '_blank')}
-              className="flex items-center space-x-1 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition-colors"
+              onClick={() => handleEditApp(app._id)}
+              className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-500"
+              title="Edit app"
             >
-              <Edit className="w-4 h-4" />
-              <span>Edit</span>
+              <Edit className="w-5 h-5" />
             </button>
             <button
               onClick={() => window.open(`/preview/${app.slug}`, '_blank')}
@@ -145,7 +182,10 @@ const Dashboard: React.FC = () => {
                 Manage your apps and track their performance
               </p>
             </div>
-            <button className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+            <button 
+              onClick={handleCreateApp}
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
               <Plus className="w-5 h-5" />
               <span>Create New App</span>
             </button>
@@ -173,7 +213,7 @@ const Dashboard: React.FC = () => {
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Total Views</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {apps.reduce((sum, app) => sum + app.analytics.views, 0)}
+                  {apps.reduce((sum, app) => sum + (app.analytics?.views || 0), 0)}
                 </p>
               </div>
               <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900 rounded-lg flex items-center justify-center">
@@ -281,7 +321,10 @@ const Dashboard: React.FC = () => {
                 : 'Create your first app to get started'
               }
             </p>
-            <button className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors mx-auto">
+            <button 
+              onClick={handleCreateApp}
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors mx-auto"
+            >
               <Plus className="w-5 h-5" />
               <span>Create New App</span>
             </button>

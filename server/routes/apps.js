@@ -68,7 +68,8 @@ router.put('/:id', authMiddleware, async (req, res) => {
     
     const app = await App.findOneAndUpdate(
       { _id: req.params.id, userId: req.user._id },
-      { ...updates, version: { $inc: 1 } },
+      { ...updates },
+      { new: true, $inc: { version: 1 } },
       { new: true }
     );
     

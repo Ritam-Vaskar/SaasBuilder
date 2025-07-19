@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useApp } from '../../contexts/AppContext';
 import { Type, MousePointer, BarChart, Calendar, Clock, Hash } from 'lucide-react';
 
 interface WidgetRendererProps {
@@ -16,6 +17,50 @@ const WidgetRenderer: React.FC<WidgetRendererProps> = ({
   onDrag,
   onResize
 }) => {
+  const { submitFormData, fetchComponentData } = useApp();
+  const [formData, setFormData] = useState<{[key: string]: any}>({});
+  const [tableData, setTableData] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (component.type === 'table' && isPreviewMode) {
+      fetchComponentData(component.id)
+        .then(response => {
+          if (response && Array.isArray(response.data)) {
+            setTableData(response.data);
+          }
+        })
+        .catch(error => console.error('Error fetching table data:', error));
+    }
+  }, [component.id, isPreviewMode, fetchComponentData]);
+
+  const handleInputChange = (fieldName: string, value: any) => {
+    setFormData(prev => ({ ...prev, [fieldName]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isPreviewMode) return;
+
+    try {
+      await submitFormData(component.id, formData);
+      setFormData({});
+      const form = e.target as HTMLFormElement;
+      form.reset();
+      
+      // If this form is linked to a table, refresh the table data
+      if (component.props.linkedTable) {
+        fetchComponentData(component.props.linkedTable)
+          .then(response => {
+            if (response && Array.isArray(response.data)) {
+              setTableData(response.data);
+            }
+          })
+          .catch(error => console.error('Error refreshing table data:', error));
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+    }
+  };
   const renderWidget = () => {
     switch (component.type) {
       case 'text':
@@ -65,82 +110,140 @@ const WidgetRenderer: React.FC<WidgetRendererProps> = ({
             className="w-full h-full p-4 bg-white dark:bg-gray-800 rounded-lg border"
             style={component.styling}
           >
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              {component.props.title || 'Form'}
-            </h3>
-            <div className="space-y-3">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                {component.props.title || 'Form'}
+              </h3>
               {component.props.fields?.map((field: any, index: number) => (
-                <div key={index}>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <div key={index} className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     {field.label}
-                    {field.required && <span className="text-red-500">*</span>}
                   </label>
-                  {field.type === 'textarea' ? (
-                    <textarea
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                      placeholder={`Enter ${field.label.toLowerCase()}`}
-                      rows={3}
-                    />
-                  ) : field.type === 'select' ? (
-                    <select className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white">
-                      {field.options?.map((option: string, i: number) => (
-                        <option key={i} value={option}>{option}</option>
-                      ))}
-                    </select>
-                  ) : (
-                    <input
-                      type={field.type}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                      placeholder={`Enter ${field.label.toLowerCase()}`}
-                    />
-                  )}
+                  <input
+                    type={field.type || 'text'}
+                    name={field.name}
+                    required={field.required}
+                    onChange={(e) => handleInputChange(field.name, e.target.value)}
+                    disabled={!isPreviewMode}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    placeholder={field.placeholder || ''}
+                  />
                 </div>
               ))}
-              <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
-                Submit
-              </button>
-            </div>
+              <div className="pt-4">
+                <button
+                  type="submit"
+                  disabled={!isPreviewMode}
+                  className="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                  {component.props.submitText || 'Submit'}
+                </button>
+              </div>
+             
+              <div className="space-y-3">
+                {component.props.fields?.map((field: any, index: number) => (
+                  <div key={index}>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      {field.label}
+                      {field.required && <span className="text-red-500">*</span>}
+                    </label>
+                    {field.type === 'textarea' ? (
+                      <textarea
+                        name={field.name}
+                        required={field.required}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                        placeholder={`Enter ${field.label.toLowerCase()}`}
+                        rows={3}
+                        onChange={(e) => handleInputChange(field.name, e.target.value)}
+                        disabled={!isPreviewMode}
+                      />
+                    ) : field.type === 'select' ? (
+                      <select 
+                        name={field.name}
+                        required={field.required}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                        onChange={(e) => handleInputChange(field.name, e.target.value)}
+                        disabled={!isPreviewMode}
+                      >
+                        <option value="">Select {field.label}</option>
+                        {field.options?.map((option: string, i: number) => (
+                          <option key={i} value={option}>{option}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        type={field.type}
+                        name={field.name}
+                        required={field.required}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                        placeholder={`Enter ${field.label.toLowerCase()}`}
+                        onChange={(e) => handleInputChange(field.name, e.target.value)}
+                        disabled={!isPreviewMode}
+                      />
+                    )}
+                  </div>
+                ))}
+                <button 
+                  type="submit" 
+                  className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={!isPreviewMode}
+                >
+                  Submit
+                </button>
+              </div>
+            </form>
           </div>
         );
 
       case 'table':
         return (
           <div
-            className="w-full h-full p-4 bg-white dark:bg-gray-800 rounded-lg border"
+            className="w-full h-full p-4 bg-white dark:bg-gray-800 rounded-lg border overflow-auto"
             style={component.styling}
           >
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              {component.props.title || 'Data Table'}
+              {component.props.title || 'Table'}
             </h3>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-200 dark:border-gray-700">
-                    {component.props.columns?.map((column: string, index: number) => (
-                      <th key={index} className="text-left py-2 px-3 font-medium text-gray-900 dark:text-white">
-                        {column}
-                      </th>
-                    ))}
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-900">
+                <tr>
+                  {component.props.columns?.map((column: any, index: number) => (
+                    <th
+                      key={index}
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                    >
+                      {column.header}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                {isPreviewMode && tableData.length > 0 ? (
+                  tableData.map((row: any, rowIndex: number) => (
+                    <tr key={rowIndex}>
+                      {component.props.columns?.map((column: any, colIndex: number) => (
+                        <td
+                          key={colIndex}
+                          className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300"
+                        >
+                          {row[column.field]}
+                        </td>
+                      ))}
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td
+                      colSpan={component.props.columns?.length || 1}
+                      className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400"
+                    >
+                      {isPreviewMode ? 'No data available' : 'Data will be displayed in preview mode'}
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  <tr className="border-b border-gray-100 dark:border-gray-700">
-                    {component.props.columns?.map((column: string, index: number) => (
-                      <td key={index} className="py-2 px-3 text-gray-600 dark:text-gray-300">
-                        Sample {column}
-                      </td>
-                    ))}
-                  </tr>
-                  <tr className="border-b border-gray-100 dark:border-gray-700">
-                    {component.props.columns?.map((column: string, index: number) => (
-                      <td key={index} className="py-2 px-3 text-gray-600 dark:text-gray-300">
-                        Demo {column}
-                      </td>
-                    ))}
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+                )}
+              </tbody>
+            </table>
           </div>
         );
 

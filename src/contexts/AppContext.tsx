@@ -63,6 +63,9 @@ interface AppContextType {
   addComponent: (component: Component) => void;
   removeComponent: (componentId: string) => void;
   duplicateComponent: (componentId: string) => void;
+  submitFormData: (formId: string, data: any) => Promise<any>;
+  fetchComponentData: (componentId: string) => Promise<any>;
+  getComponentById: (componentId: string) => Component | null;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -87,6 +90,15 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const [selectedComponent, setSelectedComponent] = useState<Component | null>(null);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+
+  
+
+  
+
+  // const getComponentById = (componentId: string): Component | null => {
+  //   if (!currentApp) return null;
+  //   return currentApp.layout.components.find(comp => comp.id === componentId) || null;
+  // };
 
   const fetchApps = async () => {
     try {
@@ -297,6 +309,52 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     addComponent(duplicatedComponent);
   };
 
+    const submitFormData = async (formId: string, data: any) => {
+    try {
+      if (!currentApp) throw new Error('No active app');
+      const token = localStorage.getItem('token');
+      if (!token) throw new Error('No authentication token');
+
+      const response = await axios.post(`${API_BASE_URL}/data/${currentApp._id}`, {
+        collection: formId,
+        data
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Failed to submit form data');
+    }
+  };
+
+  const fetchComponentData = async (componentId: string) => {
+    try {
+      if (!currentApp) throw new Error('No active app');
+      const token = localStorage.getItem('token');
+      if (!token) throw new Error('No authentication token');
+
+      const response = await axios.get(`${API_BASE_URL}/data/${currentApp._id}`, {
+        params: { collection: componentId },
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Failed to fetch component data');
+    }
+  };
+
+  const getComponentById = (componentId: string): Component | null => {
+    if (!currentApp) return null;
+    return currentApp.layout.components.find(comp => comp.id === componentId) || null;
+  };
+
   const value = {
     apps,
     currentApp,
@@ -316,7 +374,10 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     updateComponent,
     addComponent,
     removeComponent,
-    duplicateComponent
+    duplicateComponent,
+    submitFormData,
+    fetchComponentData,
+    getComponentById
   };
 
   return (
