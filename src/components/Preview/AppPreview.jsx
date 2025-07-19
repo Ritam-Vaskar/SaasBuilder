@@ -273,7 +273,8 @@ const Widget = ({ component }) => {
                     <tr key={rowIndex}>
                       {componentProps.columns?.map((column, colIndex) => (
                         <td key={colIndex} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">
-                          {row[column.field]}
+                          {row.data?.[column.field] ?? '—'}
+}
                         </td>
                       ))}
                     </tr>
