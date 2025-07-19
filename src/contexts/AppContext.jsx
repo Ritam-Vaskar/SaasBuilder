@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const AppContext = createContext();
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
 export const useApp = () => {
   const context = useContext(AppContext);

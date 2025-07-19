@@ -3,24 +3,38 @@ import { useParams } from 'react-router-dom';
 import { Loader2, AlertCircle } from 'lucide-react';
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
 const Widget = ({ component }) => {
   const [formData, setFormData] = useState({});
   const [componentData, setComponentData] = useState(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchComponentData = async () => {
       if (!component.id || !component.appId) return;
       
+      // Only fetch data for components that need to display data (table, chart, etc.)
+      if (!['table', 'chart'].includes(component.type)) return;
+      
       try {
+        setLoading(true);
+        
+        // Use the linkedCollection if specified, otherwise use the component id
+        const collection = component.props?.linkedCollection || component.id;
+        
+        console.log('Fetching data for collection:', collection);
+        
         const response = await axios.get(`${API_BASE_URL}/data/${component.appId}`, {
           params: { 
-            collection: component.props?.linkedCollection || component.id,
+            collection: collection,
             page: 1,
             limit: 50
           }
         });
+        
+        console.log('Fetched data:', response.data);
         
         setComponentData({
           data: response.data.data || [],
@@ -29,11 +43,13 @@ const Widget = ({ component }) => {
       } catch (error) {
         console.error('Error fetching component data:', error);
         setComponentData({ data: [], pagination: { page: 1, limit: 50, total: 0, pages: 0 } });
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchComponentData();
-  }, [component.id, component.appId, component.props?.linkedCollection]);
+  }, [component.id, component.appId, component.props?.linkedCollection, refreshTrigger, component.type]);
 
   const handleInputChange = (fieldName, value) => {
     setFormData(prev => ({ ...prev, [fieldName]: value }));
@@ -44,24 +60,32 @@ const Widget = ({ component }) => {
     if (!component.appId) return;
 
     try {
+      // Use the linkedCollection if specified, otherwise use the component id
+      const collection = component.props?.linkedCollection || component.id;
+      
+      console.log('Submitting to collection:', collection);
+      console.log('Form data:', formData);
+      
       await axios.post(`${API_BASE_URL}/data/${component.appId}`, {
-        collection: component.props?.linkedCollection || component.id,
+        collection: collection,
         data: formData
       });
+      
       setFormData({});
       
-      // Refresh component data after submission
-      const updatedData = await axios.get(`${API_BASE_URL}/data/${component.appId}`, {
-        params: { 
-          collection: component.props?.linkedCollection || component.id,
-          page: 1,
-          limit: 50
-        }
-      });
-      setComponentData({
-        data: updatedData.data.data || [],
-        pagination: updatedData.data.pagination || { page: 1, limit: 50, total: 0, pages: 0 }
-      });
+      // Trigger a refresh for all components
+      setRefreshTrigger(prev => prev + 1);
+
+      // Notify parent to refresh all components
+      if (component.props?.onSubmitSuccess) {
+        component.props.onSubmitSuccess();
+      }
+      
+      // Trigger global refresh if available
+      if (window.triggerGlobalRefresh) {
+        window.triggerGlobalRefresh();
+      }
+      
     } catch (error) {
       console.error('Error submitting form:', error);
     }
@@ -236,58 +260,93 @@ const Widget = ({ component }) => {
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               {componentProps.title || 'Chart'}
             </h3>
-            <div className="w-full h-full flex items-center justify-center">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-2">
-                  <svg className="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
-                  </svg>
-                </div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {componentProps.chartType || 'Bar'} Chart
-                </p>
+            {loading ? (
+              <div className="w-full h-full flex items-center justify-center">
+                <Loader2 className="w-6 h-6 text-blue-600 animate-spin" />
               </div>
-            </div>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <svg className="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
+                    </svg>
+                  </div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {componentProps.chartType || 'Bar'} Chart
+                  </p>
+                  <p className="text-xs text-gray-400 mt-2">
+                    Data points: {componentData?.data?.length || 0}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         );
 
       case 'table':
         return (
           <div className="w-full h-full p-4 bg-white dark:bg-gray-800 rounded-lg border overflow-auto" style={componentStyling}>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              {componentProps.title || 'Table'}
-            </h3>
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-900">
-                <tr>
-                  {componentProps.columns?.map((column, index) => (
-                    <th key={index} scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      {column.header}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {componentData?.data && componentData.data.length > 0 ? (
-                  componentData.data.map((row, rowIndex) => (
-                    <tr key={rowIndex}>
-                      {componentProps.columns?.map((column, colIndex) => (
-                        <td key={colIndex} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">
-                          {row.data?.[column.field] ?? '—'}
-}
-                        </td>
-                      ))}
-                    </tr>
-                  ))
-                ) : (
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                {componentProps.title || 'Table'}
+              </h3>
+              {loading && <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />}
+            </div>
+            
+            {/* Debug info - remove in production */}
+            <div className="mb-2 text-xs text-gray-500">
+              Collection: {component.props?.linkedCollection || component.id} | 
+              Records: {componentData?.data?.length || 0}
+            </div>
+            
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-900">
                   <tr>
-                    <td colSpan={componentProps.columns?.length || 1} className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
-                      No data available
-                    </td>
+                    {componentProps.columns?.map((column, index) => (
+                      <th key={index} scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        {column.header || column.field}
+                      </th>
+                    )) || (
+                      // Auto-generate columns from data if no columns specified
+                      componentData?.data?.[0] && Object.keys(componentData.data[0].data || {}).map((key, index) => (
+                        <th key={index} scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          {key}
+                        </th>
+                      ))
+                    )}
                   </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                  {componentData?.data && componentData.data.length > 0 ? (
+                    componentData.data.map((row, rowIndex) => (
+                      <tr key={rowIndex}>
+                        {componentProps.columns?.map((column, colIndex) => (
+                          <td key={colIndex} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">
+                            {row.data?.[column.field] ?? '—'}
+                          </td>
+                        )) || (
+                          // Auto-generate cells if no columns specified
+                          Object.entries(row.data || {}).map(([key, value], colIndex) => (
+                            <td key={colIndex} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">
+                              {value ?? '—'}
+                            </td>
+                          ))
+                        )}
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={componentProps.columns?.length || Object.keys(componentData?.data?.[0]?.data || {}).length || 1} className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                        {loading ? 'Loading...' : 'No data available'}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+            
             {componentData?.pagination && (
               <div className="mt-4 flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
                 <span>Total: {componentData.pagination.total} items</span>
@@ -326,6 +385,7 @@ const AppPreview = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [appId, setAppId] = useState(null);
+  const [globalRefreshTrigger, setGlobalRefreshTrigger] = useState(0);
 
   useEffect(() => {
     const fetchApp = async () => {
@@ -359,6 +419,17 @@ const AppPreview = () => {
 
     fetchApp();
   }, [slug]);
+
+  // Set up global refresh function
+  useEffect(() => {
+    window.triggerGlobalRefresh = () => {
+      setGlobalRefreshTrigger(prev => prev + 1);
+    };
+    
+    return () => {
+      delete window.triggerGlobalRefresh;
+    };
+  }, []);
 
   if (loading) {
     return (
@@ -400,6 +471,10 @@ const AppPreview = () => {
       </div>
     );
   }
+
+  const handleDataRefresh = () => {
+    setGlobalRefreshTrigger(prev => prev + 1);
+  };
 
   const components = app.layout?.components || [];
   const theme = app.layout?.theme;
@@ -451,7 +526,7 @@ const AppPreview = () => {
             <div className="relative">
               {components.map((component) => (
                 <div
-                  key={component.id}
+                  key={`${component.id}-${globalRefreshTrigger}`}
                   className="absolute"
                   style={{
                     left: component.position.x,
@@ -467,6 +542,7 @@ const AppPreview = () => {
                       ...component,
                       appId: appId
                     }} 
+                    key={globalRefreshTrigger}
                   />
                 </div>
               ))}
