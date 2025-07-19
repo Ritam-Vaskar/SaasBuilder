@@ -3,6 +3,8 @@ import { useParams } from 'react-router-dom';
 import { Loader2, AlertCircle } from 'lucide-react';
 import axios from 'axios';
 
+const API_BASE_URL = 'http://localhost:5000/api';
+
 interface Component {
   id: string;
   type: string;
@@ -50,6 +52,67 @@ interface WidgetProps {
 }
 
 const Widget: React.FC<WidgetProps> = ({ component }) => {
+  const [formData, setFormData] = useState<{[key: string]: any}>({});
+  const [componentData, setComponentData] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchComponentData = async () => {
+      if (!component.id || !component.appId) return;
+      
+      try {
+        const response = await axios.get(`${API_BASE_URL}/data/${component.appId}`, {
+          params: { 
+            collection: component.props?.linkedCollection || component.id,
+            page: 1,
+            limit: 50
+          }
+        });
+        
+        setComponentData({
+          data: response.data.data || [],
+          pagination: response.data.pagination || { page: 1, limit: 50, total: 0, pages: 0 }
+        });
+      } catch (error) {
+        console.error('Error fetching component data:', error);
+        setComponentData({ data: [], pagination: { page: 1, limit: 50, total: 0, pages: 0 } });
+      }
+    };
+
+    fetchComponentData();
+  }, [component.id, component.appId, component.props?.linkedCollection]);
+
+  const handleInputChange = (fieldName: string, value: any) => {
+    setFormData(prev => ({ ...prev, [fieldName]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!component.appId) return;
+
+    try {
+      await axios.post(`${API_BASE_URL}/data/${component.appId}`, {
+        collection: component.props?.linkedCollection || component.id,
+        data: formData
+      });
+      setFormData({});
+      
+      // Refresh component data after submission
+      const updatedData = await axios.get(`${API_BASE_URL}/data/${component.appId}`, {
+        params: { 
+          collection: component.props?.linkedCollection || component.id,
+          page: 1,
+          limit: 50
+        }
+      });
+      setComponentData({
+        data: updatedData.data.data || [],
+        pagination: updatedData.data.pagination || { page: 1, limit: 50, total: 0, pages: 0 }
+      });
+    } catch (error) {
+      console.error('Error submitting form:', error);
+    }
+  };
+
   // Add defensive checks for component structure
   if (!component || typeof component !== 'object') {
     return (
@@ -120,11 +183,7 @@ const Widget: React.FC<WidgetProps> = ({ component }) => {
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               {componentProps.title || 'Form'}
             </h3>
-            <form className="space-y-3" onSubmit={(e) => {
-              e.preventDefault();
-              // Handle form submission
-              console.log('Form submitted');
-            }}>
+            <form className="space-y-3" onSubmit={handleSubmit}>
               {componentProps.fields?.map((field: any, index: number) => {
                 if (!field || typeof field !== 'object') return null;
                 
@@ -140,6 +199,9 @@ const Widget: React.FC<WidgetProps> = ({ component }) => {
                     </label>
                     {fieldType === 'textarea' ? (
                       <textarea
+                        name={field.name}
+                        value={formData[field.name] || ''}
+                        onChange={(e) => handleInputChange(field.name, e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                         placeholder={`Enter ${fieldLabel.toLowerCase()}`}
                         rows={3}
@@ -147,6 +209,9 @@ const Widget: React.FC<WidgetProps> = ({ component }) => {
                       />
                     ) : fieldType === 'select' ? (
                       <select 
+                        name={field.name}
+                        value={formData[field.name] || ''}
+                        onChange={(e) => handleInputChange(field.name, e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                         required={fieldRequired}
                       >
@@ -160,6 +225,9 @@ const Widget: React.FC<WidgetProps> = ({ component }) => {
                     ) : (
                       <input
                         type={fieldType}
+                        name={field.name}
+                        value={formData[field.name] || ''}
+                        onChange={(e) => handleInputChange(field.name, e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                         placeholder={`Enter ${fieldLabel.toLowerCase()}`}
                         required={fieldRequired}
@@ -176,7 +244,7 @@ const Widget: React.FC<WidgetProps> = ({ component }) => {
                 type="submit"
                 className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
               >
-                Submit
+                {componentProps.submitText || 'Submit'}
               </button>
             </form>
           </div>
@@ -229,6 +297,51 @@ const Widget: React.FC<WidgetProps> = ({ component }) => {
           </div>
         );
 
+      case 'table':
+        return (
+          <div className="w-full h-full p-4 bg-white dark:bg-gray-800 rounded-lg border overflow-auto" style={componentStyling}>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              {componentProps.title || 'Table'}
+            </h3>
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-900">
+                <tr>
+                  {componentProps.columns?.map((column: any, index: number) => (
+                    <th key={index} scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      {column.header}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                {componentData?.data && componentData.data.length > 0 ? (
+                  componentData.data.map((row: any, rowIndex: number) => (
+                    <tr key={rowIndex}>
+                      {componentProps.columns?.map((column: any, colIndex: number) => (
+                        <td key={colIndex} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">
+                          {row[column.field]}
+                        </td>
+                      ))}
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={componentProps.columns?.length || 1} className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                      No data available
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+            {componentData?.pagination && (
+              <div className="mt-4 flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
+                <span>Total: {componentData.pagination.total} items</span>
+                <span>Page {componentData.pagination.page} of {componentData.pagination.pages}</span>
+              </div>
+            )}
+          </div>
+        );
+
       default:
         return (
           <div
@@ -257,8 +370,7 @@ const AppPreview: React.FC = () => {
   const [app, setApp] = useState<App | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const API_BASE_URL = 'http://localhost:5000/api';
+  const [appId, setAppId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchApp = async () => {
@@ -275,6 +387,7 @@ const AppPreview: React.FC = () => {
         // Fetch public app by slug
         const response = await axios.get(`${API_BASE_URL}/apps/${slug}/public`);
         setApp(response.data.app);
+        setAppId(response.data.app._id);
       } catch (err: any) {
         console.error('Error fetching app:', err);
         if (err.response?.status === 404) {
@@ -394,7 +507,12 @@ const AppPreview: React.FC = () => {
                     zIndex: 1
                   }}
                 >
-                  <Widget component={component} />
+                  <Widget 
+                    component={{
+                      ...component,
+                      appId: appId
+                    }} 
+                  />
                 </div>
               ))}
             </div>

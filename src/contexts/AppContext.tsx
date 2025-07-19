@@ -315,9 +315,19 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('No authentication token');
 
+      const formComponent = getComponentById(formId);
+      if (!formComponent) throw new Error('Form component not found');
+
+      // If the form is linked to a table, use the table's ID as the collection
+      const collectionId = formComponent.props.linkedTable || formId;
+
       const response = await axios.post(`${API_BASE_URL}/data/${currentApp._id}`, {
-        collection: formId,
-        data
+        collection: collectionId,
+        data: {
+          ...data,
+          timestamp: new Date().toISOString(),
+          formId: formId
+        }
       }, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -327,6 +337,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
       return response.data;
     } catch (error: any) {
+      console.error('Error submitting form data:', error);
       throw new Error(error.response?.data?.message || 'Failed to submit form data');
     }
   };
@@ -337,6 +348,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('No authentication token');
 
+      const component = getComponentById(componentId);
+      if (!component) throw new Error('Component not found');
+
       const response = await axios.get(`${API_BASE_URL}/data/${currentApp._id}`, {
         params: { collection: componentId },
         headers: {
@@ -344,9 +358,20 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         }
       });
 
-      return response.data;
+      // For tables, return all data entries as an array
+      if (component.type === 'table') {
+        return { data: Array.isArray(response.data) ? response.data : [] };
+      }
+
+      // For forms or other components, return the latest entry
+      if (Array.isArray(response.data) && response.data.length > 0) {
+        return { data: response.data[response.data.length - 1] };
+      }
+
+      return { data: null };
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Failed to fetch component data');
+      console.error('Error fetching component data:', error);
+      return { data: component?.type === 'table' ? [] : null };
     }
   };
 
