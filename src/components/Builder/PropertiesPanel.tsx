@@ -49,7 +49,7 @@ const PropertiesPanel: React.FC = () => {
                 Content
               </label>
               <textarea
-                value={selectedComponent.props.content || ''}
+                value={selectedComponent.props?.content || ''}
                 onChange={(e) => handlePropUpdate('content', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                 rows={4}
@@ -61,7 +61,7 @@ const PropertiesPanel: React.FC = () => {
                 Font Size
               </label>
               <select
-                value={selectedComponent.props.fontSize || 'medium'}
+                value={selectedComponent.props?.fontSize || 'medium'}
                 onChange={(e) => handlePropUpdate('fontSize', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
               >
@@ -75,7 +75,7 @@ const PropertiesPanel: React.FC = () => {
                 Text Align
               </label>
               <select
-                value={selectedComponent.props.textAlign || 'left'}
+                value={selectedComponent.props?.textAlign || 'left'}
                 onChange={(e) => handlePropUpdate('textAlign', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
               >
@@ -96,7 +96,7 @@ const PropertiesPanel: React.FC = () => {
               </label>
               <input
                 type="text"
-                value={selectedComponent.props.text || ''}
+                value={selectedComponent.props?.text || ''}
                 onChange={(e) => handlePropUpdate('text', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                 placeholder="Enter button text"
@@ -107,7 +107,7 @@ const PropertiesPanel: React.FC = () => {
                 Variant
               </label>
               <select
-                value={selectedComponent.props.variant || 'primary'}
+                value={selectedComponent.props?.variant || 'primary'}
                 onChange={(e) => handlePropUpdate('variant', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
               >
@@ -120,7 +120,7 @@ const PropertiesPanel: React.FC = () => {
                 Size
               </label>
               <select
-                value={selectedComponent.props.size || 'medium'}
+                value={selectedComponent.props?.size || 'medium'}
                 onChange={(e) => handlePropUpdate('size', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
               >
@@ -141,7 +141,7 @@ const PropertiesPanel: React.FC = () => {
               </label>
               <input
                 type="text"
-                value={selectedComponent.props.title || ''}
+                value={selectedComponent.props?.title || ''}
                 onChange={(e) => handlePropUpdate('title', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                 placeholder="Enter form title"
@@ -152,13 +152,13 @@ const PropertiesPanel: React.FC = () => {
                 Form Fields
               </label>
               <div className="space-y-2">
-                {selectedComponent.props.fields?.map((field: any, index: number) => (
+                {selectedComponent.props?.fields?.map((field: any, index: number) => (
                   <div key={index} className="flex items-center space-x-2">
                     <input
                       type="text"
                       value={field.label}
                       onChange={(e) => {
-                        const newFields = [...selectedComponent.props.fields];
+                        const newFields = [...(selectedComponent.props?.fields || [])];
                         newFields[index].label = e.target.value;
                         handlePropUpdate('fields', newFields);
                       }}
@@ -168,7 +168,7 @@ const PropertiesPanel: React.FC = () => {
                     <select
                       value={field.type}
                       onChange={(e) => {
-                        const newFields = [...selectedComponent.props.fields];
+                        const newFields = [...(selectedComponent.props?.fields || [])];
                         newFields[index].type = e.target.value;
                         handlePropUpdate('fields', newFields);
                       }}
@@ -186,7 +186,7 @@ const PropertiesPanel: React.FC = () => {
                 <button
                   onClick={() => {
                     const newFields = [
-                      ...(selectedComponent.props.fields || []),
+                      ...(selectedComponent.props?.fields || []),
                       { name: `field${Date.now()}`, type: 'text', label: 'New Field', required: false }
                     ];
                     handlePropUpdate('fields', newFields);
@@ -209,7 +209,7 @@ const PropertiesPanel: React.FC = () => {
               </label>
               <input
                 type="text"
-                value={selectedComponent.props.title || ''}
+                value={selectedComponent.props?.title || ''}
                 onChange={(e) => handlePropUpdate('title', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                 placeholder="Enter widget title"
@@ -276,8 +276,8 @@ const PropertiesPanel: React.FC = () => {
                 <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">X</label>
                 <input
                   type="number"
-                  value={selectedComponent.position.x}
-                  onChange={(e) => handlePositionUpdate('x', parseInt(e.target.value))}
+                  value={selectedComponent.position?.x || 0}
+                  onChange={(e) => handlePositionUpdate('x', parseInt(e.target.value) || 0)}
                   className="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm dark:bg-gray-700 dark:text-white"
                 />
               </div>
@@ -285,8 +285,8 @@ const PropertiesPanel: React.FC = () => {
                 <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Y</label>
                 <input
                   type="number"
-                  value={selectedComponent.position.y}
-                  onChange={(e) => handlePositionUpdate('y', parseInt(e.target.value))}
+                  value={selectedComponent.position?.y || 0}
+                  onChange={(e) => handlePositionUpdate('y', parseInt(e.target.value) || 0)}
                   className="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm dark:bg-gray-700 dark:text-white"
                 />
               </div>
@@ -294,8 +294,8 @@ const PropertiesPanel: React.FC = () => {
                 <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Width</label>
                 <input
                   type="number"
-                  value={selectedComponent.position.width}
-                  onChange={(e) => handlePositionUpdate('width', parseInt(e.target.value))}
+                  value={selectedComponent.position?.width || 0}
+                  onChange={(e) => handlePositionUpdate('width', parseInt(e.target.value) || 0)}
                   className="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm dark:bg-gray-700 dark:text-white"
                 />
               </div>
@@ -303,8 +303,8 @@ const PropertiesPanel: React.FC = () => {
                 <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Height</label>
                 <input
                   type="number"
-                  value={selectedComponent.position.height}
-                  onChange={(e) => handlePositionUpdate('height', parseInt(e.target.value))}
+                  value={selectedComponent.position?.height || 0}
+                  onChange={(e) => handlePositionUpdate('height', parseInt(e.target.value) || 0)}
                   className="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm dark:bg-gray-700 dark:text-white"
                 />
               </div>
@@ -326,7 +326,7 @@ const PropertiesPanel: React.FC = () => {
                 </label>
                 <input
                   type="color"
-                  value={selectedComponent.styling.backgroundColor || '#ffffff'}
+                  value={selectedComponent.styling?.backgroundColor || '#ffffff'}
                   onChange={(e) => handleStyleUpdate('backgroundColor', e.target.value)}
                   className="w-full h-8 border border-gray-300 dark:border-gray-600 rounded"
                 />
@@ -339,12 +339,12 @@ const PropertiesPanel: React.FC = () => {
                   type="range"
                   min="0"
                   max="20"
-                  value={parseInt(selectedComponent.styling.borderRadius) || 8}
+                  value={parseInt(selectedComponent.styling?.borderRadius?.replace('px', '') || '8')}
                   onChange={(e) => handleStyleUpdate('borderRadius', `${e.target.value}px`)}
                   className="w-full"
                 />
                 <span className="text-xs text-gray-500 dark:text-gray-400">
-                  {selectedComponent.styling.borderRadius || '8px'}
+                  {selectedComponent.styling?.borderRadius || '8px'}
                 </span>
               </div>
               <div>
@@ -355,12 +355,12 @@ const PropertiesPanel: React.FC = () => {
                   type="range"
                   min="0"
                   max="32"
-                  value={parseInt(selectedComponent.styling.padding) || 16}
+                  value={parseInt(selectedComponent.styling?.padding?.replace('px', '') || '16')}
                   onChange={(e) => handleStyleUpdate('padding', `${e.target.value}px`)}
                   className="w-full"
                 />
                 <span className="text-xs text-gray-500 dark:text-gray-400">
-                  {selectedComponent.styling.padding || '16px'}
+                  {selectedComponent.styling?.padding || '16px'}
                 </span>
               </div>
             </div>

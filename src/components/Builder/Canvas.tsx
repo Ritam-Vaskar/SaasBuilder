@@ -2,7 +2,8 @@ import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { useDrop } from 'react-dnd';
 import { useApp } from '../../contexts/AppContext';
 import WidgetRenderer from './WidgetRenderer';
-import { Plus, Grid, Move, Trash2, Copy, RotateCcw } from 'lucide-react';
+import { Plus, Grid, Move, Trash2, Copy, RotateCcw, Sparkles } from 'lucide-react';
+import AIOptimizer from './AIOptimizer';
 
 // Define types for better TypeScript support
 interface ComponentPosition {
@@ -372,109 +373,130 @@ const Canvas: React.FC = () => {
 
   // Safe access to components
   const components = currentApp?.layout?.components || [];
+  const [showAIOptimizer, setShowAIOptimizer] = useState(false);
 
   return (
-    <div 
-      ref={(node) => {
-        canvasRef.current = node;
-        drop(node);
-      }}
-      className={`flex-1 relative bg-white dark:bg-gray-800 overflow-auto ${
-        isOver ? 'bg-blue-50 dark:bg-blue-900' : ''
-      } ${dragState.isDragging || resizeState.isResizing ? 'select-none' : ''}`}
-      onClick={handleCanvasClick}
-      style={{
-        backgroundImage: !isPreviewMode 
-          ? `radial-gradient(circle, #e5e7eb 1px, transparent 1px)`
-          : 'none',
-        backgroundSize: `${gridSize}px ${gridSize}px`,
-        minHeight: '800px',
-        cursor: dragState.isDragging ? 'grabbing' : 'default'
-      }}
-    >
-      {/* Canvas Background Message */}
-      {components.length === 0 && !isPreviewMode && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center">
-            <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Plus className="w-8 h-8 text-gray-400" />
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              Start building your app
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400">
-              Drag widgets from the library to get started
-            </p>
-          </div>
+    <div className="relative h-full overflow-hidden bg-gray-100 dark:bg-gray-800">
+      {/* AI Optimizer Button */}
+      {!isPreviewMode && components.length > 0 && (
+        <div className="absolute top-4 right-4 z-10">
+          <button
+            onClick={() => setShowAIOptimizer(true)}
+            className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 shadow-md transition-colors"
+          >
+            <Sparkles className="w-4 h-4" />
+            <span>AI Optimize</span>
+          </button>
         </div>
       )}
-
-      {/* Render Components */}
-      {components.map((component: Component) => (
-        <div
-          key={component.id}
-          className={`absolute transition-all ${
-            selectedComponent?.id === component.id && !isPreviewMode
-              ? 'ring-2 ring-blue-500 ring-offset-2'
-              : ''
-          }`}
-          style={{
-            left: `${component.position.x}px`,
-            top: `${component.position.y}px`,
-            width: `${component.position.width}px`,
-            height: `${component.position.height}px`,
-            zIndex: selectedComponent?.id === component.id ? 10 : 1,
-            cursor: isPreviewMode ? 'default' : 'grab'
-          }}
-          onClick={(e) => handleComponentClick(component, e)}
-          onMouseDown={(e) => handleMouseDown(e, component.id)}
-        >
-          {/* Component Actions */}
-          {selectedComponent?.id === component.id && !isPreviewMode && (
-            <div className="absolute -top-10 left-0 flex space-x-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg p-1 z-20">
-              <button
-                onClick={(e) => handleDuplicateComponent(component.id, e)}
-                className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                title="Duplicate"
-              >
-                <Copy className="w-4 h-4" />
-              </button>
-              <button
-                onClick={(e) => handleDeleteComponent(component.id, e)}
-                className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                title="Delete"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-              <div className="w-px bg-gray-200 dark:bg-gray-600 mx-1" />
-              <div className="flex items-center px-2 text-xs text-gray-500">
-                <Move className="w-3 h-3 mr-1" />
-                {component.position.width} × {component.position.height}
+    
+      {/* AI Optimizer Modal */}
+      {showAIOptimizer && (
+        <AIOptimizer onClose={() => setShowAIOptimizer(false)} />
+      )}
+    
+      <div 
+        ref={(node) => {
+          canvasRef.current = node;
+          drop(node);
+        }}
+        className={`flex-1 relative bg-white dark:bg-gray-800 overflow-auto ${
+          isOver ? 'bg-blue-50 dark:bg-blue-900' : ''
+        } ${dragState.isDragging || resizeState.isResizing ? 'select-none' : ''}`}
+        onClick={handleCanvasClick}
+        style={{
+          backgroundImage: !isPreviewMode 
+            ? `radial-gradient(circle, #e5e7eb 1px, transparent 1px)`
+            : 'none',
+          backgroundSize: `${gridSize}px ${gridSize}px`,
+          minHeight: '800px',
+          cursor: dragState.isDragging ? 'grabbing' : 'default'
+        }}
+      >
+        {/* Canvas Background Message */}
+        {components.length === 0 && !isPreviewMode && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Plus className="w-8 h-8 text-gray-400" />
               </div>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                Start building your app
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                Drag widgets from the library to get started
+              </p>
             </div>
-          )}
-
-          {/* Widget Renderer */}
-          <WidgetRenderer
-            component={component}
-            isSelected={selectedComponent?.id === component.id}
-            isPreviewMode={isPreviewMode}
-          />
-
-          {/* Resize Handles */}
-          {renderResizeHandles(component.id)}
-        </div>
-      ))}
-
-      {/* Drop Zone Indicator */}
-      {isOver && (
-        <div className="absolute inset-0 border-2 border-dashed border-blue-500 bg-blue-50 dark:bg-blue-900 bg-opacity-20 flex items-center justify-center pointer-events-none">
-          <div className="text-blue-600 dark:text-blue-400 text-center">
-            <Grid className="w-8 h-8 mx-auto mb-2" />
-            <p className="text-sm font-medium">Drop widget here</p>
           </div>
-        </div>
-      )}
+        )}
+    
+        {/* Render Components */}
+        {components.map((component: Component) => (
+          <div
+            key={component.id}
+            className={`absolute transition-all ${
+              selectedComponent?.id === component.id && !isPreviewMode
+                ? 'ring-2 ring-blue-500 ring-offset-2'
+                : ''
+            }`}
+            style={{
+              left: `${component.position.x}px`,
+              top: `${component.position.y}px`,
+              width: `${component.position.width}px`,
+              height: `${component.position.height}px`,
+              zIndex: selectedComponent?.id === component.id ? 10 : 1,
+              cursor: isPreviewMode ? 'default' : 'grab'
+            }}
+            onClick={(e) => handleComponentClick(component, e)}
+            onMouseDown={(e) => handleMouseDown(e, component.id)}
+          >
+            {/* Component Actions */}
+            {selectedComponent?.id === component.id && !isPreviewMode && (
+              <div className="absolute -top-10 left-0 flex space-x-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg p-1 z-20">
+                <button
+                  onClick={(e) => handleDuplicateComponent(component.id, e)}
+                  className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                  title="Duplicate"
+                >
+                  <Copy className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={(e) => handleDeleteComponent(component.id, e)}
+                  className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                  title="Delete"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+                <div className="w-px bg-gray-200 dark:bg-gray-600 mx-1" />
+                <div className="flex items-center px-2 text-xs text-gray-500">
+                  <Move className="w-3 h-3 mr-1" />
+                  {component.position.width} × {component.position.height}
+                </div>
+              </div>
+            )}
+    
+            {/* Widget Renderer */}
+            <WidgetRenderer
+              component={component}
+              isSelected={selectedComponent?.id === component.id}
+              isPreviewMode={isPreviewMode}
+            />
+    
+            {/* Resize Handles */}
+            {renderResizeHandles(component.id)}
+          </div>
+        ))}
+    
+        {/* Drop Zone Indicator */}
+        {isOver && (
+          <div className="absolute inset-0 border-2 border-dashed border-blue-500 bg-blue-50 dark:bg-blue-900 bg-opacity-20 flex items-center justify-center pointer-events-none">
+            <div className="text-blue-600 dark:text-blue-400 text-center">
+              <Grid className="w-8 h-8 mx-auto mb-2" />
+              <p className="text-sm font-medium">Drop widget here</p>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
